@@ -1,0 +1,52 @@
+name: Deploy Monitoramento
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+          if [ -z "${{ secrets.SSH_HOST }}" ]; then
+            echo "SSH_HOST está vazio"
+            exit 1
+          fi
+
+          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sincronizar arquivos com o servidor
+        run: |
+          rsync -avz --delete \
+            --exclude=".git" \
+            --exclude=".github" \
+            ./ \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/apps/Monitoramento
+
+      - name: Criar .env com credenciais
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << EOF
+              cat > /opt/apps/Monitoramento/.env << 'ENVFILE'
+          AUTH_USER=${{ secrets.MONITOR_USER }}
+          AUTH_PASS=${{ secrets.MONITOR_PASS }}
+          ENVFILE
+          EOF
+
+      - name: Subir containers com Docker Compose
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+              cd /opt/apps/Monitoramento
+              docker compose up -d --build
+          EOF
