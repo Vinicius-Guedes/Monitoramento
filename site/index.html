@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitoramento - viniciusguedes.cloud</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/>
+      </svg>
+      <div>
+        <h1>Monitoramento</h1>
+        <span class="header-sub" id="hostname">carregando...</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="badge-live" id="badge-live">
+        <span class="pulse"></span> LIVE
+      </span>
+      <span class="last-update" id="last-update">--</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- ─── System metrics ─── -->
+    <section class="metrics" id="metrics">
+      <div class="metric-card">
+        <div class="gauge-wrap">
+          <svg class="gauge" viewBox="0 0 120 120">
+            <circle class="gauge-bg" cx="60" cy="60" r="54"/>
+            <circle class="gauge-fill" id="cpu-ring" cx="60" cy="60" r="54"
+              stroke-dasharray="339.29" stroke-dashoffset="339.29"/>
+          </svg>
+          <span class="gauge-label" id="cpu-value">0%</span>
+        </div>
+        <div class="metric-info">
+          <h3>CPU</h3>
+          <p id="cpu-model">--</p>
+          <p id="cpu-cores">--</p>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="gauge-wrap">
+          <svg class="gauge" viewBox="0 0 120 120">
+            <circle class="gauge-bg" cx="60" cy="60" r="54"/>
+            <circle class="gauge-fill" id="mem-ring" cx="60" cy="60" r="54"
+              stroke-dasharray="339.29" stroke-dashoffset="339.29"/>
+          </svg>
+          <span class="gauge-label" id="mem-value">0%</span>
+        </div>
+        <div class="metric-info">
+          <h3>Mem&oacute;ria</h3>
+          <p id="mem-detail">--</p>
+          <p id="mem-free">--</p>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="gauge-wrap">
+          <svg class="gauge" viewBox="0 0 120 120">
+            <circle class="gauge-bg" cx="60" cy="60" r="54"/>
+            <circle class="gauge-fill" id="disk-ring" cx="60" cy="60" r="54"
+              stroke-dasharray="339.29" stroke-dashoffset="339.29"/>
+          </svg>
+          <span class="gauge-label" id="disk-value">0%</span>
+        </div>
+        <div class="metric-info">
+          <h3>Disco</h3>
+          <p id="disk-detail">--</p>
+          <p id="disk-free">--</p>
+        </div>
+      </div>
+
+      <div class="metric-card metric-uptime">
+        <svg class="uptime-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+        </svg>
+        <div class="metric-info">
+          <h3>Uptime</h3>
+          <p class="uptime-value" id="uptime-value">--</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── Containers ─── -->
+    <section class="containers-section">
+      <div class="section-header">
+        <h2>Containers Docker</h2>
+        <span class="container-count" id="container-count">0 containers</span>
+      </div>
+      <div class="container-grid" id="container-grid">
+        <div class="loading">Carregando containers...</div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>viniciusguedes.cloud</span>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

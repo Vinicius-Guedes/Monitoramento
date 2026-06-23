@@ -1,0 +1,37 @@
+services:
+  monitoramento:
+    build: ./api
+    container_name: monitoramento
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc:/host/proc:ro
+      - /:/host/rootfs:ro
+      - ./site:/app/public:ro
+    environment:
+      - HOST_PROC=/host/proc
+      - HOST_ROOTFS=/host/rootfs
+      # - AUTH_USER=admin
+      # - AUTH_PASS=SuaSenhaAqui
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+
+      # Router HTTP → redirect to HTTPS
+      - "traefik.http.routers.monitoramento-http.rule=Host(`monitoramento.viniciusguedes.cloud`)"
+      - "traefik.http.routers.monitoramento-http.entrypoints=web"
+      - "traefik.http.routers.monitoramento-http.middlewares=monitoramento-redirect"
+      - "traefik.http.middlewares.monitoramento-redirect.redirectscheme.scheme=https"
+
+      # Router HTTPS
+      - "traefik.http.routers.monitoramento.rule=Host(`monitoramento.viniciusguedes.cloud`)"
+      - "traefik.http.routers.monitoramento.entrypoints=websecure"
+      - "traefik.http.routers.monitoramento.tls.certresolver=letsencrypt"
+
+      # Service
+      - "traefik.http.services.monitoramento.loadbalancer.server.port=3000"
+
+networks:
+  web:
+    external: true
