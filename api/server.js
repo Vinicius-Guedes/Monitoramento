@@ -141,8 +141,18 @@ app.get('/api/containers', async (_req, res) => {
         .filter((p) => p.PublicPort)
         .map((p) => `${p.PublicPort}:${p.PrivatePort}/${p.Type}`)
     }));
-    containers.sort((a, b) => a.name.localeCompare(b.name));
-    res.json(containers);
+    const hidden = ['ae-se7-ui', 'ae-se7-api', 'ae-se7-db'];
+    const visible = containers.filter((c) => !hidden.includes(c.name));
+    const priority = ['gianluca', 'isabelamarques', 'viniciusguedes', 'mangiare'];
+    visible.sort((a, b) => {
+      const ai = priority.indexOf(a.name);
+      const bi = priority.indexOf(b.name);
+      if (ai !== -1 && bi !== -1) return ai - bi;
+      if (ai !== -1) return -1;
+      if (bi !== -1) return 1;
+      return a.name.localeCompare(b.name);
+    });
+    res.json(visible);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
