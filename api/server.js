@@ -326,7 +326,7 @@ if (TG_TOKEN && TG_CHAT) {
 }
 
 // ── API routes ─────────────────────────────────────────────────────────────
-app.post('/api/report', async (_req, res) => {
+app.get('/api/report', async (_req, res) => {
   try {
     await sendDailyReport();
     res.json({ ok: true });
