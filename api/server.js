@@ -160,6 +160,7 @@ const ALERT_INTERVAL = 30000;  // check every 30s
 const COOLDOWN = 300000;       // 5 min between same alert
 
 const alertCooldowns = {};
+const alertActive = {};  // tracks what is currently down
 const monitoredContainers = ['gianluca', 'isabelamarques', 'viniciusguedes', 'mangiare'];
 const monitoredSites = {
   gianluca: 'https://gianluca.viniciusguedes.cloud',
@@ -229,42 +230,69 @@ async function checkAlerts() {
     );
   }
 
-  // Containers down
+  // Containers down / recovered
   try {
     const list = await docker.listContainers({ all: true });
     for (const c of list) {
       const name = c.Names[0].replace(/^\//, '');
       if (!monitoredContainers.includes(name)) continue;
-      if (c.State !== 'running' && canAlert(`container_${name}`)) {
+      const key = `container_${name}`;
+      if (c.State !== 'running') {
+        if (canAlert(key)) {
+          alertActive[key] = true;
+          await sendTelegram(
+            `⚫ <b>Container Fora</b>\n` +
+            `Servidor: ${hostname}\n` +
+            `Container: <b>${name}</b>\n` +
+            `Estado: ${c.State}\n` +
+            `Status: ${c.Status}`
+          );
+        }
+      } else if (alertActive[key]) {
+        delete alertActive[key];
+        delete alertCooldowns[key];
         await sendTelegram(
-          `⚫ <b>Container Fora</b>\n` +
+          `✅ <b>Container Recuperado</b>\n` +
           `Servidor: ${hostname}\n` +
           `Container: <b>${name}</b>\n` +
-          `Estado: ${c.State}\n` +
           `Status: ${c.Status}`
         );
       }
     }
   } catch { /* ignore */ }
 
-  // Sites ping
+  // Sites ping / recovered
   for (const [name, url] of Object.entries(monitoredSites)) {
+    const key = `site_${name}`;
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 10000);
       const r = await fetch(url, { method: 'HEAD', signal: controller.signal, redirect: 'follow' });
       clearTimeout(timeout);
-      if (!r.ok && canAlert(`site_${name}`)) {
+      if (!r.ok) {
+        if (canAlert(key)) {
+          alertActive[key] = true;
+          await sendTelegram(
+            `🌐 <b>Site Fora</b>\n` +
+            `Servidor: ${hostname}\n` +
+            `Site: <b>${name}</b>\n` +
+            `URL: ${url}\n` +
+            `Status HTTP: ${r.status}`
+          );
+        }
+      } else if (alertActive[key]) {
+        delete alertActive[key];
+        delete alertCooldowns[key];
         await sendTelegram(
-          `🌐 <b>Site Fora</b>\n` +
+          `✅ <b>Site Recuperado</b>\n` +
           `Servidor: ${hostname}\n` +
           `Site: <b>${name}</b>\n` +
-          `URL: ${url}\n` +
-          `Status HTTP: ${r.status}`
+          `URL: ${url}`
         );
       }
     } catch (err) {
-      if (canAlert(`site_${name}`)) {
+      if (canAlert(key)) {
+        alertActive[key] = true;
         await sendTelegram(
           `🌐 <b>Site Inacessivel</b>\n` +
           `Servidor: ${hostname}\n` +
