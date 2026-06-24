@@ -161,6 +161,12 @@ const COOLDOWN = 300000;       // 5 min between same alert
 
 const alertCooldowns = {};
 const monitoredContainers = ['gianluca', 'isabelamarques', 'viniciusguedes', 'mangiare'];
+const monitoredSites = {
+  gianluca: 'https://gianluca.viniciusguedes.cloud',
+  isabelamarques: 'https://isabelamarquespsi.com.br',
+  viniciusguedes: 'https://viniciusguedes.cloud',
+  mangiare: 'https://mangiarerosticceria.viniciusguedes.cloud'
+};
 
 async function sendTelegram(message) {
   if (!TG_TOKEN || !TG_CHAT) return;
@@ -240,6 +246,35 @@ async function checkAlerts() {
       }
     }
   } catch { /* ignore */ }
+
+  // Sites ping
+  for (const [name, url] of Object.entries(monitoredSites)) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      const r = await fetch(url, { method: 'HEAD', signal: controller.signal, redirect: 'follow' });
+      clearTimeout(timeout);
+      if (!r.ok && canAlert(`site_${name}`)) {
+        await sendTelegram(
+          `🌐 <b>Site Fora</b>\n` +
+          `Servidor: ${hostname}\n` +
+          `Site: <b>${name}</b>\n` +
+          `URL: ${url}\n` +
+          `Status HTTP: ${r.status}`
+        );
+      }
+    } catch (err) {
+      if (canAlert(`site_${name}`)) {
+        await sendTelegram(
+          `🌐 <b>Site Inacessivel</b>\n` +
+          `Servidor: ${hostname}\n` +
+          `Site: <b>${name}</b>\n` +
+          `URL: ${url}\n` +
+          `Erro: ${err.message}`
+        );
+      }
+    }
+  }
 }
 
 // ── Daily report (8h Brasilia / 11h UTC) ─────────────────────────────────
@@ -266,11 +301,24 @@ async function sendDailyReport() {
     const list = await docker.listContainers({ all: true });
     for (const name of monitoredContainers) {
       const c = list.find((x) => x.Names[0].replace(/^\//, '') === name);
+      const url = monitoredSites[name];
+      let siteIcon = '';
+      if (url) {
+        try {
+          const controller = new AbortController();
+          const t = setTimeout(() => controller.abort(), 10000);
+          const r = await fetch(url, { method: 'HEAD', signal: controller.signal, redirect: 'follow' });
+          clearTimeout(t);
+          siteIcon = r.ok ? ' | Site 🟢' : ` | Site 🔴 (${r.status})`;
+        } catch {
+          siteIcon = ' | Site 🔴';
+        }
+      }
       if (c) {
         const icon = c.State === 'running' ? '🟢' : '🔴';
-        clientesStatus += `${icon} <b>${name}</b> — ${c.Status}\n`;
+        clientesStatus += `${icon} <b>${name}</b> — ${c.Status}${siteIcon}\n`;
       } else {
-        clientesStatus += `⚫ <b>${name}</b> — nao encontrado\n`;
+        clientesStatus += `⚫ <b>${name}</b> — nao encontrado${siteIcon}\n`;
       }
     }
   } catch {
