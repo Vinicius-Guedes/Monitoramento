@@ -326,6 +326,15 @@ if (TG_TOKEN && TG_CHAT) {
 }
 
 // ── API routes ─────────────────────────────────────────────────────────────
+app.post('/api/report', async (_req, res) => {
+  try {
+    await sendDailyReport();
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/system', (_req, res) => {
   try {
     res.json({
