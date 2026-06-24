@@ -11,8 +11,8 @@ services:
     environment:
       - HOST_PROC=/host/proc
       - HOST_ROOTFS=/host/rootfs
-      - AUTH_USER=${AUTH_USER}
-      - AUTH_PASS=${AUTH_PASS}
+      # - AUTH_USER=${AUTH_USER}
+      # - AUTH_PASS=${AUTH_PASS}
     networks:
       - web
     labels:

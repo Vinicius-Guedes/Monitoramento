@@ -81,10 +81,10 @@ function renderSystem(data) {
   document.getElementById('uptime-value').textContent = formatUptime(data.uptime);
 }
 
-function renderContainers(list) {
-  const grid = document.getElementById('container-grid');
+function renderGroup(list, gridId, countId) {
+  const grid = document.getElementById(gridId);
   const running = list.filter(c => c.state === 'running').length;
-  document.getElementById('container-count').textContent =
+  document.getElementById(countId).textContent =
     running + ' rodando / ' + list.length + ' total';
 
   grid.innerHTML = list.map(c => {
@@ -100,6 +100,11 @@ function renderContainers(list) {
         ${ports}
       </div>`;
   }).join('');
+}
+
+function renderContainers(data) {
+  renderGroup(data.clientes, 'clientes-grid', 'clientes-count');
+  renderGroup(data.servicos, 'servicos-grid', 'servicos-count');
 }
 
 async function refresh() {

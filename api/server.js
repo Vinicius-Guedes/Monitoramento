@@ -189,16 +189,25 @@ app.get('/api/containers', async (_req, res) => {
     }));
     const hidden = ['ae-se7-ui', 'ae-se7-api', 'ae-se7-db', 'pizzaria-db'];
     const visible = containers.filter((c) => !hidden.includes(c.name));
-    const priority = ['gianluca', 'isabelamarques', 'viniciusguedes', 'mangiare'];
-    visible.sort((a, b) => {
-      const ai = priority.indexOf(a.name);
-      const bi = priority.indexOf(b.name);
-      if (ai !== -1 && bi !== -1) return ai - bi;
-      if (ai !== -1) return -1;
-      if (bi !== -1) return 1;
-      return a.name.localeCompare(b.name);
-    });
-    res.json(visible);
+
+    const clientes = ['gianluca', 'isabelamarques', 'viniciusguedes', 'mangiare'];
+    const grupoClientes = [];
+    const grupoServicos = [];
+
+    for (const c of visible) {
+      if (clientes.includes(c.name)) {
+        c.group = 'clientes';
+        grupoClientes.push(c);
+      } else {
+        c.group = 'servicos';
+        grupoServicos.push(c);
+      }
+    }
+
+    grupoClientes.sort((a, b) => clientes.indexOf(a.name) - clientes.indexOf(b.name));
+    grupoServicos.sort((a, b) => a.name.localeCompare(b.name));
+
+    res.json({ clientes: grupoClientes, servicos: grupoServicos });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
