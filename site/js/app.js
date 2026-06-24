@@ -120,7 +120,45 @@ async function refresh() {
   }
 }
 
+// ── Process memory modal ───────────────────────────────────────
+const overlay = document.getElementById('modal-overlay');
+const tbody   = document.getElementById('proc-tbody');
+
+function openModal() {
+  overlay.classList.add('open');
+  loadProcesses();
+}
+
+function closeModal() {
+  overlay.classList.remove('open');
+}
+
+async function loadProcesses() {
+  tbody.innerHTML = '<tr><td colspan="5" class="loading">Carregando...</td></tr>';
+  try {
+    const res = await fetch('/api/processes');
+    const procs = await res.json();
+    tbody.innerHTML = procs.map(p => {
+      const color = p.percentage < 5 ? 'ok' : p.percentage < 15 ? 'warn' : 'danger';
+      return `<tr>
+        <td class="pid">${p.pid}</td>
+        <td class="name" title="${p.command}">${p.name}</td>
+        <td class="mem">${formatBytes(p.rss)}</td>
+        <td class="pct">${p.percentage}%</td>
+        <td><div class="proc-bar"><div class="proc-bar-fill ${color}" style="width:${Math.min(p.percentage * 2, 100)}%"></div></div></td>
+      </tr>`;
+    }).join('');
+  } catch {
+    tbody.innerHTML = '<tr><td colspan="5" class="loading">Erro ao carregar processos</td></tr>';
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   refresh();
   setInterval(refresh, REFRESH);
+
+  document.getElementById('mem-card').addEventListener('click', openModal);
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 });

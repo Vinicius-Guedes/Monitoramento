@@ -112,6 +112,44 @@ function getHostname() {
   }
 }
 
+// ── Process memory reader ──────────────────────────────────────────────────
+function getProcessesMemory() {
+  const pageSize = 4096;
+  const totalMem = getMemory().total;
+  const procs = [];
+
+  try {
+    const dirs = fs.readdirSync(HOST_PROC).filter((d) => /^\d+$/.test(d));
+    for (const pid of dirs) {
+      try {
+        const status = fs.readFileSync(`${HOST_PROC}/${pid}/status`, 'utf8');
+        const cmdline = fs.readFileSync(`${HOST_PROC}/${pid}/cmdline`, 'utf8')
+          .replace(/\0/g, ' ').trim();
+        const stat = fs.readFileSync(`${HOST_PROC}/${pid}/stat`, 'utf8');
+
+        const nameMatch = status.match(/^Name:\s+(.+)/m);
+        const rssMatch = stat.match(/^\d+ \([^)]+\)\s+\S+(?:\s+\S+){20}\s+(\d+)/);
+        if (!nameMatch || !rssMatch) continue;
+
+        const name = nameMatch[1].trim();
+        const rssBytes = parseInt(rssMatch[1], 10) * pageSize;
+        if (rssBytes === 0) continue;
+
+        procs.push({
+          pid: parseInt(pid, 10),
+          name,
+          command: cmdline.substring(0, 120) || name,
+          rss: rssBytes,
+          percentage: totalMem > 0 ? Math.round((rssBytes / totalMem) * 10000) / 100 : 0
+        });
+      } catch { /* process vanished */ }
+    }
+  } catch { /* ignore */ }
+
+  procs.sort((a, b) => b.rss - a.rss);
+  return procs.slice(0, 30);
+}
+
 // ── API routes ─────────────────────────────────────────────────────────────
 app.get('/api/system', (_req, res) => {
   try {
@@ -122,6 +160,14 @@ app.get('/api/system', (_req, res) => {
       memory: getMemory(),
       disk: getDisk()
     });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/processes', (_req, res) => {
+  try {
+    res.json(getProcessesMemory());
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -141,7 +187,7 @@ app.get('/api/containers', async (_req, res) => {
         .filter((p) => p.PublicPort)
         .map((p) => `${p.PublicPort}:${p.PrivatePort}/${p.Type}`)
     }));
-    const hidden = ['ae-se7-ui', 'ae-se7-api', 'ae-se7-db'];
+    const hidden = ['ae-se7-ui', 'ae-se7-api', 'ae-se7-db', 'pizzaria-db'];
     const visible = containers.filter((c) => !hidden.includes(c.name));
     const priority = ['gianluca', 'isabelamarques', 'viniciusguedes', 'mangiare'];
     visible.sort((a, b) => {

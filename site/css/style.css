@@ -273,6 +273,109 @@ footer {
   color: var(--text-dim);
 }
 
+/* ── Modal ────────────────────────────────────────────────────── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  width: 90%;
+  max-width: 720px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 40px rgba(0,0,0,.4);
+  animation: modalIn .2s ease;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(16px) scale(.97) }
+  to   { opacity: 1; transform: translateY(0) scale(1) }
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.4rem;
+  border-bottom: 1px solid var(--border);
+}
+.modal-header h2 { font-size: 1rem; font-weight: 600 }
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+  transition: color .15s;
+}
+.modal-close:hover { color: var(--text) }
+.modal-body {
+  padding: 1rem 1.4rem;
+  overflow-y: auto;
+}
+
+/* ── Process table ────────────────────────────────────────────── */
+.proc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .82rem;
+}
+.proc-table th {
+  text-align: left;
+  font-size: .7rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-dim);
+  padding: .5rem .4rem;
+  border-bottom: 1px solid var(--border);
+}
+.proc-table td {
+  padding: .45rem .4rem;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  color: var(--text-sec);
+}
+.proc-table tr:hover td { background: rgba(255,255,255,.03) }
+.proc-table .pid  { color: var(--text-dim); font-family: monospace; width: 60px }
+.proc-table .name { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.proc-table .mem  { font-family: monospace; white-space: nowrap }
+.proc-table .pct  { font-family: monospace; white-space: nowrap; width: 55px }
+.bar-col { width: 120px }
+.proc-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  overflow: hidden;
+}
+.proc-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width .3s;
+}
+.proc-bar-fill.ok     { background: var(--success) }
+.proc-bar-fill.warn   { background: var(--warning) }
+.proc-bar-fill.danger { background: var(--danger)  }
+
+.click-hint {
+  font-size: .7rem;
+  color: var(--info);
+  opacity: .7;
+}
+
+/* clickable memory card */
+.metric-card.clickable { cursor: pointer }
+.metric-card.clickable:hover { border-color: var(--info); box-shadow: 0 0 20px rgba(59,130,246,.15) }
+
 /* ── Responsive ───────────────────────────────────────────────── */
 @media (max-width: 900px) {
   .metrics { grid-template-columns: repeat(2, 1fr) }

@@ -45,7 +45,7 @@
         </div>
       </div>
 
-      <div class="metric-card">
+      <div class="metric-card clickable" id="mem-card" title="Clique para ver processos">
         <div class="gauge-wrap">
           <svg class="gauge" viewBox="0 0 120 120">
             <circle class="gauge-bg" cx="60" cy="60" r="54"/>
@@ -57,7 +57,7 @@
         <div class="metric-info">
           <h3>Mem&oacute;ria</h3>
           <p id="mem-detail">--</p>
-          <p id="mem-free">--</p>
+          <p id="mem-free">-- <span class="click-hint">(clique para detalhes)</span></p>
         </div>
       </div>
 
@@ -103,6 +103,32 @@
   <footer>
     <span>viniciusguedes.cloud</span>
   </footer>
+
+  <!-- Modal processos -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Consumo de Memória por Processo</h2>
+        <button class="modal-close" id="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table class="proc-table">
+          <thead>
+            <tr>
+              <th>PID</th>
+              <th>Processo</th>
+              <th>Memória</th>
+              <th>%</th>
+              <th class="bar-col">Uso</th>
+            </tr>
+          </thead>
+          <tbody id="proc-tbody">
+            <tr><td colspan="5" class="loading">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
   <script src="js/app.js"></script>
 </body>
