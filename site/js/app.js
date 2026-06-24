@@ -81,7 +81,7 @@ function renderSystem(data) {
   document.getElementById('uptime-value').textContent = formatUptime(data.uptime);
 }
 
-const clienteUrls = {
+const siteUrls = {
   gianluca: 'https://gianluca.viniciusguedes.cloud',
   isabelamarques: 'https://isabelamarquespsi.com.br',
   viniciusguedes: 'https://viniciusguedes.cloud',
@@ -99,7 +99,7 @@ function renderClientes(list, gridId, countId) {
     running + ' rodando / ' + list.length + ' total';
 
   grid.innerHTML = list.map(c => {
-    const url = clienteUrls[c.name];
+    const url = siteUrls[c.name];
     const open = url ? ` onclick="window.open('${url}','_blank')"` : '';
     return `
       <div class="ct-card ${c.state}${url ? ' ct-clickable' : ''}"${open}>
@@ -120,13 +120,16 @@ function renderServicos(list, gridId, countId) {
     running + ' rodando / ' + list.length + ' total';
 
   grid.innerHTML = list.map(c => {
+    const url = siteUrls[c.name];
+    const open = url ? ` onclick="window.open('${url}','_blank')"` : '';
     return `
-      <div class="ct-card ${c.state}">
+      <div class="ct-card ${c.state}${url ? ' ct-clickable' : ''}"${open}>
         <div class="ct-header">
           <span class="ct-name">${c.name}</span>
           <span class="ct-state ${c.state}">${c.state}</span>
         </div>
         <div class="ct-status">${c.status}</div>
+        ${url ? '<span class="ct-link">' + url.replace('https://', '') + '</span>' : ''}
       </div>`;
   }).join('');
 }

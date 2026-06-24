@@ -190,7 +190,7 @@ app.get('/api/containers', async (_req, res) => {
     const hidden = ['ae-se7-ui', 'ae-se7-api', 'ae-se7-db', 'pizzaria-db'];
     const visible = containers.filter((c) => !hidden.includes(c.name));
 
-    const clientes = ['gianluca', 'isabelamarques', 'viniciusguedes', 'mangiare', 'fernandopessotto', 'maxiprod-ui', 'monitoramento', 'pizzaria-ui'];
+    const clientes = ['gianluca', 'isabelamarques', 'viniciusguedes', 'mangiare'];
     const grupoClientes = [];
     const grupoServicos = [];
 
