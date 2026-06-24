@@ -242,10 +242,85 @@ async function checkAlerts() {
   } catch { /* ignore */ }
 }
 
+// ── Daily report (8h Brasilia / 11h UTC) ─────────────────────────────────
+function formatUptimeShort(sec) {
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const parts = [];
+  if (d > 0) parts.push(d + 'd');
+  if (h > 0) parts.push(h + 'h');
+  parts.push(m + 'min');
+  return parts.join(' ');
+}
+
+async function sendDailyReport() {
+  const hostname = getHostname();
+  const uptime = formatUptimeShort(getUptime());
+  const cpu = getCpu();
+  const mem = getMemory();
+  const disk = getDisk();
+
+  let clientesStatus = '';
+  try {
+    const list = await docker.listContainers({ all: true });
+    for (const name of monitoredContainers) {
+      const c = list.find((x) => x.Names[0].replace(/^\//, '') === name);
+      if (c) {
+        const icon = c.State === 'running' ? '🟢' : '🔴';
+        clientesStatus += `${icon} <b>${name}</b> — ${c.Status}\n`;
+      } else {
+        clientesStatus += `⚫ <b>${name}</b> — nao encontrado\n`;
+      }
+    }
+  } catch {
+    clientesStatus = 'Erro ao listar containers\n';
+  }
+
+  const memUsed = (mem.used / 1073741824).toFixed(1);
+  const memTotal = (mem.total / 1073741824).toFixed(1);
+  const diskUsed = (disk.used / 1073741824).toFixed(1);
+  const diskTotal = (disk.total / 1073741824).toFixed(1);
+
+  await sendTelegram(
+    `📊 <b>Relatorio Diario</b>\n` +
+    `Servidor: ${hostname}\n` +
+    `Uptime: ${uptime}\n\n` +
+    `<b>Recursos:</b>\n` +
+    `CPU: ${cpu.usage}% (${cpu.cores} cores)\n` +
+    `Memoria: ${mem.percentage}% (${memUsed}GB / ${memTotal}GB)\n` +
+    `Disco: ${disk.percentage}% (${diskUsed}GB / ${diskTotal}GB)\n\n` +
+    `<b>Clientes:</b>\n` +
+    clientesStatus
+  );
+}
+
+function scheduleDailyReport() {
+  const now = new Date();
+  // Brasilia = UTC-3
+  const brasiliaOffset = -3 * 60;
+  const localOffset = now.getTimezoneOffset();
+  const brasiliaTime = new Date(now.getTime() + (localOffset + brasiliaOffset) * 60000);
+
+  let next8h = new Date(brasiliaTime);
+  next8h.setHours(8, 0, 0, 0);
+  if (brasiliaTime >= next8h) next8h.setDate(next8h.getDate() + 1);
+
+  // Convert back to server time
+  const msUntil = next8h.getTime() - brasiliaTime.getTime();
+
+  console.log(`Relatorio diario agendado em ${Math.round(msUntil / 60000)} min`);
+  setTimeout(() => {
+    sendDailyReport();
+    setInterval(sendDailyReport, 24 * 60 * 60 * 1000);
+  }, msUntil);
+}
+
 if (TG_TOKEN && TG_CHAT) {
   console.log('Telegram alerts ativados (CPU>' + ALERT_CPU + '% MEM>' + ALERT_MEM + '% DISK>' + ALERT_DISK + '%)');
   setInterval(checkAlerts, ALERT_INTERVAL);
-  setTimeout(checkAlerts, 5000); // primeiro check 5s após start
+  setTimeout(checkAlerts, 5000);
+  scheduleDailyReport();
 } else {
   console.log('Telegram alerts desativados (sem TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID)');
 }
