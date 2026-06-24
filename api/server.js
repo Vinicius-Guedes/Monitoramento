@@ -150,6 +150,106 @@ function getProcessesMemory() {
   return procs.slice(0, 30);
 }
 
+// ── Telegram Alerts ───────────────────────────────────────────────────────
+const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TG_CHAT  = process.env.TELEGRAM_CHAT_ID;
+const ALERT_CPU  = parseInt(process.env.ALERT_CPU || '90', 10);
+const ALERT_MEM  = parseInt(process.env.ALERT_MEMORY || '85', 10);
+const ALERT_DISK = parseInt(process.env.ALERT_DISK || '90', 10);
+const ALERT_INTERVAL = 30000;  // check every 30s
+const COOLDOWN = 300000;       // 5 min between same alert
+
+const alertCooldowns = {};
+const monitoredContainers = ['gianluca', 'isabelamarques', 'viniciusguedes', 'mangiare'];
+
+async function sendTelegram(message) {
+  if (!TG_TOKEN || !TG_CHAT) return;
+  try {
+    const url = `https://api.telegram.org/bot${TG_TOKEN}/sendMessage`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: TG_CHAT, text: message, parse_mode: 'HTML' })
+    });
+    if (!res.ok) console.error('Telegram error:', await res.text());
+  } catch (err) {
+    console.error('Telegram send failed:', err.message);
+  }
+}
+
+function canAlert(key) {
+  const now = Date.now();
+  if (alertCooldowns[key] && now - alertCooldowns[key] < COOLDOWN) return false;
+  alertCooldowns[key] = now;
+  return true;
+}
+
+async function checkAlerts() {
+  const hostname = getHostname();
+
+  // CPU
+  const cpu = getCpu();
+  if (cpu.usage >= ALERT_CPU && canAlert('cpu')) {
+    await sendTelegram(
+      `🔴 <b>CPU Alta</b>\n` +
+      `Servidor: ${hostname}\n` +
+      `Uso: <b>${cpu.usage}%</b> (limite: ${ALERT_CPU}%)`
+    );
+  }
+
+  // Memory
+  const mem = getMemory();
+  if (mem.percentage >= ALERT_MEM && canAlert('memory')) {
+    const used = (mem.used / 1073741824).toFixed(1);
+    const total = (mem.total / 1073741824).toFixed(1);
+    await sendTelegram(
+      `🟡 <b>Memória Alta</b>\n` +
+      `Servidor: ${hostname}\n` +
+      `Uso: <b>${mem.percentage}%</b> (${used}GB / ${total}GB)\n` +
+      `Limite: ${ALERT_MEM}%`
+    );
+  }
+
+  // Disk
+  const disk = getDisk();
+  if (disk.percentage >= ALERT_DISK && canAlert('disk')) {
+    const used = (disk.used / 1073741824).toFixed(1);
+    const total = (disk.total / 1073741824).toFixed(1);
+    await sendTelegram(
+      `🟠 <b>Disco Alto</b>\n` +
+      `Servidor: ${hostname}\n` +
+      `Uso: <b>${disk.percentage}%</b> (${used}GB / ${total}GB)\n` +
+      `Limite: ${ALERT_DISK}%`
+    );
+  }
+
+  // Containers down
+  try {
+    const list = await docker.listContainers({ all: true });
+    for (const c of list) {
+      const name = c.Names[0].replace(/^\//, '');
+      if (!monitoredContainers.includes(name)) continue;
+      if (c.State !== 'running' && canAlert(`container_${name}`)) {
+        await sendTelegram(
+          `⚫ <b>Container Fora</b>\n` +
+          `Servidor: ${hostname}\n` +
+          `Container: <b>${name}</b>\n` +
+          `Estado: ${c.State}\n` +
+          `Status: ${c.Status}`
+        );
+      }
+    }
+  } catch { /* ignore */ }
+}
+
+if (TG_TOKEN && TG_CHAT) {
+  console.log('Telegram alerts ativados (CPU>' + ALERT_CPU + '% MEM>' + ALERT_MEM + '% DISK>' + ALERT_DISK + '%)');
+  setInterval(checkAlerts, ALERT_INTERVAL);
+  setTimeout(checkAlerts, 5000); // primeiro check 5s após start
+} else {
+  console.log('Telegram alerts desativados (sem TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID)');
+}
+
 // ── API routes ─────────────────────────────────────────────────────────────
 app.get('/api/system', (_req, res) => {
   try {

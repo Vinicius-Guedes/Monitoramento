@@ -13,6 +13,11 @@ services:
       - HOST_ROOTFS=/host/rootfs
       # - AUTH_USER=${AUTH_USER}
       # - AUTH_PASS=${AUTH_PASS}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - ALERT_CPU=90
+      - ALERT_MEMORY=85
+      - ALERT_DISK=90
     networks:
       - web
     labels:
