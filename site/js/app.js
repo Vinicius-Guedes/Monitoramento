@@ -85,7 +85,11 @@ const clienteUrls = {
   gianluca: 'https://gianluca.viniciusguedes.cloud',
   isabelamarques: 'https://isabelamarquespsi.com.br',
   viniciusguedes: 'https://viniciusguedes.cloud',
-  mangiare: 'https://mangiarerosticceria.viniciusguedes.cloud'
+  mangiare: 'https://mangiarerosticceria.viniciusguedes.cloud',
+  fernandopessotto: 'https://fernandopessotto.viniciusguedes.cloud',
+  'maxiprod-ui': 'https://maxiprod.viniciusguedes.cloud',
+  monitoramento: 'https://monitoramento.viniciusguedes.cloud',
+  'pizzaria-ui': 'https://pizzaria.viniciusguedes.cloud'
 };
 
 function renderClientes(list, gridId, countId) {
