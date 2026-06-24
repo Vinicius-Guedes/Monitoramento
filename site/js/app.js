@@ -81,30 +81,55 @@ function renderSystem(data) {
   document.getElementById('uptime-value').textContent = formatUptime(data.uptime);
 }
 
-function renderGroup(list, gridId, countId) {
+const clienteUrls = {
+  gianluca: 'https://gianluca.viniciusguedes.cloud',
+  isabelamarques: 'https://isabelamarquespsi.com.br',
+  viniciusguedes: 'https://viniciusguedes.cloud',
+  mangiare: 'https://mangiarerosticceria.viniciusguedes.cloud'
+};
+
+function renderClientes(list, gridId, countId) {
   const grid = document.getElementById(gridId);
   const running = list.filter(c => c.state === 'running').length;
   document.getElementById(countId).textContent =
     running + ' rodando / ' + list.length + ' total';
 
   grid.innerHTML = list.map(c => {
-    const ports = c.ports.length ? '<div class="ct-ports">' + c.ports.join(', ') + '</div>' : '';
+    const url = clienteUrls[c.name];
+    const open = url ? ` onclick="window.open('${url}','_blank')"` : '';
+    return `
+      <div class="ct-card ${c.state}${url ? ' ct-clickable' : ''}"${open}>
+        <div class="ct-header">
+          <span class="ct-name">${c.name}</span>
+          <span class="ct-state ${c.state}">${c.state}</span>
+        </div>
+        <div class="ct-status">${c.status}</div>
+        ${url ? '<span class="ct-link">' + url.replace('https://', '') + '</span>' : ''}
+      </div>`;
+  }).join('');
+}
+
+function renderServicos(list, gridId, countId) {
+  const grid = document.getElementById(gridId);
+  const running = list.filter(c => c.state === 'running').length;
+  document.getElementById(countId).textContent =
+    running + ' rodando / ' + list.length + ' total';
+
+  grid.innerHTML = list.map(c => {
     return `
       <div class="ct-card ${c.state}">
         <div class="ct-header">
           <span class="ct-name">${c.name}</span>
           <span class="ct-state ${c.state}">${c.state}</span>
         </div>
-        <div class="ct-image">${c.image}</div>
         <div class="ct-status">${c.status}</div>
-        ${ports}
       </div>`;
   }).join('');
 }
 
 function renderContainers(data) {
-  renderGroup(data.clientes, 'clientes-grid', 'clientes-count');
-  renderGroup(data.servicos, 'servicos-grid', 'servicos-count');
+  renderClientes(data.clientes, 'clientes-grid', 'clientes-count');
+  renderServicos(data.servicos, 'servicos-grid', 'servicos-count');
 }
 
 async function refresh() {

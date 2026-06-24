@@ -248,11 +248,13 @@ main {
 .ct-state.restarting { color: var(--warning); background: rgba(245,158,11,.12) }
 .ct-state.created    { color: var(--info);    background: rgba(59,130,246,.12)  }
 
-.ct-image {
+.ct-clickable { cursor: pointer }
+.ct-clickable:hover { border-color: var(--info); box-shadow: 0 0 20px rgba(59,130,246,.15) }
+.ct-link {
+  display: inline-block;
   font-size: .78rem;
-  color: var(--text-dim);
-  margin-bottom: .3rem;
-  word-break: break-all;
+  color: var(--info);
+  margin-top: .2rem;
 }
 .ct-status {
   font-size: .78rem;
